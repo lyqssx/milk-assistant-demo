@@ -221,7 +221,7 @@ function dial(){
  const visible=state.pinned,gap=360/visible.length,layout=ringLayout(),timing=timerMode();let markup='';
  visible.forEach((n,i)=>{
   const step=steps[n],{mid,a,b,span}=layout[i],selected=selectedStage===step.id,labelId='ring-label-'+step.id,status=nodeTimer(step.id);
-  const reverse=[2,3].includes(n),lp=point(reverse?b:a,145),lq=point(reverse?a:b,145),labelPath=`M ${lp[0]} ${lp[1]} A 145 145 0 0 ${reverse?0:1} ${lq[0]} ${lq[1]}`;
+  const labelAngle=((mid%360)+360)%360,reverse=labelAngle>90&&labelAngle<270,lp=point(reverse?b:a,145),lq=point(reverse?a:b,145),labelPath=`M ${lp[0]} ${lp[1]} A 145 145 0 0 ${reverse?0:1} ${lq[0]} ${lq[1]}`;
   const color=selected?'#6a2b3a':used(step.id)?'#deaba6':'#f1dace';
   const label=step.id==='take'?step.short:stageNotice(step.id)?(step.id==='cool'?'降温-待查看':'取用登记-待查看'):status?(step.id==='take'?(state.warmNotified?'取用登记-待查看':'取用登记-升温中'):coolingWait()?'降温待启动':remaining()?(state.coolingTasks.length>1?'降温中 ×'+state.coolingTasks.length:'降温中'):'降温-待查看'):step.short;
   const cp=point(reverse?b:a,112),cq=point(reverse?a:b,112),clockPath=`M ${cp[0]} ${cp[1]} A 112 112 0 0 ${reverse?0:1} ${cq[0]} ${cq[1]}`;
