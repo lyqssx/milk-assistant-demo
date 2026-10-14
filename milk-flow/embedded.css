@@ -44,3 +44,5 @@ html,body{width:100%;height:100%;margin:0;background:#fff}body{font-family:-appl
 .phone .app-header .brand{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .balance-empty-guide>p:last-child,.balance-insight{text-wrap:balance}
+
+.cold-admission-primary .admission-source-button{min-height:72px;font-size:17px;font-weight:600;padding:18px}.cold-manual-entry{margin:0 0 14px;padding:6px 0;color:var(--sub);font-size:14px}.admission-time-static{cursor:default}.manual-admission-fields{margin-top:16px}
