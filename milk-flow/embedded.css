@@ -42,3 +42,5 @@ html,body{width:100%;height:100%;margin:0;background:#fff}body{font-family:-appl
 
 
 .phone .app-header .brand{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.balance-empty-guide>p:last-child,.balance-insight{text-wrap:balance}
