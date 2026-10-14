@@ -1,0 +1,14 @@
+{
+  "name": "用奶助手 Demo",
+  "short_name": "用奶助手",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "fullscreen"
+  ],
+  "background_color": "#f9f7f5",
+  "theme_color": "#f9f7f5",
+  "orientation": "portrait"
+}

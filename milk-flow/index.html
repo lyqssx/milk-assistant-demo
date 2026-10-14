@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>用奶助手 · Momcozy</title><link rel="stylesheet" href="style.css?v=20261014-layout-foundation-25"><link rel="stylesheet" href="embedded.css?v=20261014-layout-foundation-25"></head>
+<body>
+<main class="showcase">
+  <button id="reset" hidden></button>
+  <section id="milk-flow-root" class="phone" aria-label="母乳管理 App 演示"><div class="status"><b>9:41</b><span>●●●　▰</span></div><header class="app-header"><button class="flow-back" data-action="flowBack" aria-label="返回"><img src="../assets/ms-back.svg" alt=""></button><h1 id="milk-flow-page-title" class="brand">用奶助手</h1><button class="avatar" aria-label="奶仓设置" data-action="settings"><img src="../assets/figma-review-r2/control-setting-a.svg" alt=""><img src="../assets/figma-review-r2/control-setting-b.svg" alt=""></button></header><div id="page" class="page"></div><div id="resume"></div><nav class="bottom-nav"><button class="selected" data-tab="首页">⌂<span>首页</span></button><button data-tab="记录">◷<span>记录</span></button><button data-tab="我的">○<span>我的</span></button></nav>
+    <div id="overlay" class="overlay hidden"><button id="scrim" class="scrim" aria-label="收起待用奶"></button><section class="sheet" role="dialog" aria-modal="true" aria-label="待用奶工具"><div class="handle"></div><header class="sheet-header"><div><span class="eyebrow">MILK FLOW</span><h2 id="sheet-title">待用奶</h2></div><button id="collapse" class="icon-btn" aria-label="收起工具">收起</button></header><div id="sheet-content" class="sheet-content"></div></section></div>
+    <div id="interaction-layer" class="interaction-layer hidden"></div>
+    <div id="toast" class="toast" role="status"></div>
+  </section>
+</main><script src="app.js?v=20261014-layout-foundation-25"></script></body></html>
