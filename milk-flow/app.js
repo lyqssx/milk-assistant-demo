@@ -299,6 +299,9 @@ function applyScannedTake(code){const r=window.parent.__milkStoragePrototype.rec
 function freezeContainers(){return [...state.bottles.filter(b=>b.amount>0),...state.looseBatches.filter(b=>b.amount>0).map((b,i)=>({...b,name:'单瓶 '+(i+1)}))];}
 function freezeContainer(id){return bottleById(id)||looseBatch(id);}
 function pumpRecordEntryHTML(){return '<button class="admission-source-button" data-action="pickPump"><span>选择吸奶记录</span><span aria-hidden="true">›</span></button>';}
+function pumpDurationText(seconds,minutes){return Number.isFinite(seconds)&&seconds>=0?duration(Math.round(seconds)):Number.isFinite(minutes)&&minutes>=0?minutes+' 分钟':'--';}
+function inlinePumpRecordsHTML(){const records=state.pumpRecords.filter(p=>!p.stored&&pendingVolume(p)>0).sort((a,b)=>b.at-a.at);return `<section class="cold-inline-pumps" aria-label="选择吸奶记录"><h3>选择吸奶记录</h3><p class="pump-fill-hint">这次吸出的奶，顺手存好。选一条记录，奶量和时间就不用再填了。</p><div class="cold-pump-list" tabindex="0" aria-label="待入库吸奶记录，可上下滚动">${records.map(p=>`<button class="cold-pump-option ${editorDraft.pumpRecordId===p.id?'selected':''}" data-fill-pump="${p.id}" aria-pressed="${editorDraft.pumpRecordId===p.id}"><span><b>${dateInput(p.at).replace('T',' ')}</b><small>左 ${p.left??'--'} / 右 ${p.right??'--'} mL</small></span><strong>${pendingVolume(p)} <small>mL</small></strong></button>`).join('')||'<p class="cold-pump-empty">还没有待入库的吸奶记录，可以先手动记下这次奶量。</p>'}</div>${records.length>3?'<p class="cold-pump-scroll-hint">上下滑动，查看其他记录</p>':''}</section>`;}
+function selectedAdmissionCardHTML(){const p=state.pumpRecords.find(p=>p.id===editorDraft.pumpRecordId);if(!p)return '';return `<section class="cold-selected-record" aria-label="本次冷藏入库信息"><div class="cold-selected-heading"><b>本次冷藏入库</b><strong>${pendingVolume(p)} <small>mL</small></strong></div><dl><div><dt>吸奶时间</dt><dd>${dateInput(p.at).replace('T',' ')}</dd></div><div><dt>左侧奶量</dt><dd>${p.left??'--'} mL</dd></div><div><dt>右侧奶量</dt><dd>${p.right??'--'} mL</dd></div><div><dt>吸奶时长</dt><dd>${pumpDurationText(p.durationSeconds,p.durationMinutes)}</dd></div></dl><p>这次的吸奶信息已带好，确认后就能存入冷藏。</p></section>`;}
 function editorHTML(){
  if(recordKind==='measure'&&smartEntry)return smartAccessoryEditorHTML();
  if(recordKind==='measure'&&dateEditing)return dateEditorHTML();
@@ -313,7 +316,7 @@ function editorHTML(){
   fields=`${editorDraft.storage==='Frozen'?'':pumpRecordEntryHTML()+'<p class="pump-fill-hint">选择记录后，自动填写入库信息。</p>'}${smartEntryButtons()}${dateTimeField()}${amountField('total',editorDraft.total,'奶量')}<button class="split-input-toggle" data-action="toggleMilkSides" aria-expanded="${!!editorDraft.splitInput}" aria-controls="milk-side-fields">${editorDraft.splitInput?'收起左右填写':'按左右分别填写'} <span aria-hidden="true">${editorDraft.splitInput?'−':'＋'}</span></button><div id="milk-side-fields" class="card-sides" ${editorDraft.splitInput?'':'hidden'}><div>${amountField('left',editorDraft.left,'左侧')}</div><div>${amountField('right',editorDraft.right,'右侧')}</div></div><label class="warming-toggle"><input type="checkbox" data-draft="enableCooling" ${editorDraft.enableCooling?'checked':''}>开启降温计时</label>${editorDraft.enableCooling?'<p class="cooling-placement">保存后确认放入冰箱，再开始预估降温计时。</p>':''}`;
   if(editorDraft.storage!=='Frozen'){
    const manual=editorDraft.admissionMode==='manual',chosen=editorDraft.admissionMode==='record'&&editorDraft.pumpRecordId;
-   fields=`<div class="cold-admission-primary">${pumpRecordEntryHTML()}<p class="pump-fill-hint">${chosen?'已带入吸奶记录，吸奶时间保持原记录。':'选择吸奶记录，带入奶量与吸奶时间。'}</p></div><button class="cold-manual-entry text-btn" data-action="manualAdmission" aria-expanded="${manual}">${manual?'手动输入已展开':'手动输入'}</button>${dateTimeField()}${manual?`<div class="manual-admission-fields">${amountField('total',editorDraft.total,'奶量')}<button class="split-input-toggle" data-action="toggleMilkSides" aria-expanded="${!!editorDraft.splitInput}" aria-controls="milk-side-fields">${editorDraft.splitInput?'收起左右填写':'按左右分别填写'} <span aria-hidden="true">${editorDraft.splitInput?'−':'＋'}</span></button><div id="milk-side-fields" class="card-sides" ${editorDraft.splitInput?'':'hidden'}><div>${amountField('left',editorDraft.left,'左侧')}</div><div>${amountField('right',editorDraft.right,'右侧')}</div></div></div>`:chosen?amountField('total',editorDraft.total,'本次入库奶量'):''}${manual||chosen?`<label class="warming-toggle"><input type="checkbox" data-draft="enableCooling" ${editorDraft.enableCooling?'checked':''}>开启降温计时</label>${editorDraft.enableCooling?'<p class="cooling-placement">保存后确认放入冰箱，再开始预估降温计时。</p>':''}`:''}`;
+   fields=`${inlinePumpRecordsHTML()}<button class="cold-manual-entry" data-action="manualAdmission" aria-expanded="${manual}">${manual?'正在手动输入':'手动输入'}</button>${manual?dateTimeField():''}${manual?`<div class="manual-admission-fields">${amountField('total',editorDraft.total,'奶量')}<button class="split-input-toggle" data-action="toggleMilkSides" aria-expanded="${!!editorDraft.splitInput}" aria-controls="milk-side-fields">${editorDraft.splitInput?'收起左右填写':'按左右分别填写'} <span aria-hidden="true">${editorDraft.splitInput?'−':'＋'}</span></button><div id="milk-side-fields" class="card-sides" ${editorDraft.splitInput?'':'hidden'}><div>${amountField('left',editorDraft.left,'左侧')}</div><div>${amountField('right',editorDraft.right,'右侧')}</div></div></div>`:chosen?selectedAdmissionCardHTML():''}${manual||chosen?`<label class="warming-toggle"><input type="checkbox" data-draft="enableCooling" ${editorDraft.enableCooling?'checked':''}>开启降温计时</label>${editorDraft.enableCooling?'<p class="cooling-placement">保存后确认放入冰箱，再开始预估降温计时。</p>':''}`:''}`;
   }
  }else if(recordKind==='cool'){
   title='降温计时';const volume=Number(editorDraft.volume),estimate=coolingEstimate(volume,state.preferences.fridgeTemperature);
@@ -360,7 +363,7 @@ function openRecord(kind,options={}){
  if(kind==='measure'){editorDraft.splitInput=false;if(editorDraft.storage!=='Frozen'){editorDraft.admissionMode=state.selectedPendingPumpId&&editorDraft.pumpRecordId?'record':null;if(!editorDraft.admissionMode){editorDraft.pumpRecordId=null;editorDraft.total='';editorDraft.left='';editorDraft.right='';}}}
  render();
 }
-function closeRecord(){if(editorDraft.takeFromEntry&&!smartEntry&&!dateEditing){recordKind=null;editorError='';window.parent.milkFlowIntegration?.returnToTakeEntry();return;}if(smartEntry){smartEntry=null;render();return;}if(dateEditing){dateEditing=false;render();return;}recordKind=null;editorError='';addingBottle=false;render();$('.single-center button')?.focus({preventScroll:true});}
+function closeRecord(){if(smartEntry){smartEntry=null;render();return;}if(dateEditing){dateEditing=false;render();return;}recordKind=null;editorError='';addingBottle=false;render();$('.single-center button')?.focus({preventScroll:true});}
 function fail(message){editorError=message;$('#record-error').textContent=message;return false;}
 function consumeBottles(amount,preferred){
  const list=[...state.bottles].sort((a,b)=>a.id===preferred?-1:b.id===preferred?1:(a.oldest||0)-(b.oldest||0));
@@ -382,6 +385,7 @@ function commitRecord(){
   startWarmTimer();timerExpanded=true;recordKind=null;view='workspace';save();render();return;
  }
  if(current==='take'&&recordKind==='transaction'&&editorDraft.stockKind!=='frozen'&&!editorDraft.bottleId&&!editorDraft.batchId){fail('请先选择取用容器');return;}
+ if(recordKind==='measure'&&editorDraft.storage!=='Frozen'&&editorDraft.admissionMode==='record'){const p=state.pumpRecords.find(p=>p.id===editorDraft.pumpRecordId);if(!p||p.stored){fail('这条记录已入库，请重新选择');return;}editorDraft.total=pendingVolume(p);}
  const raw=recordKind==='measure'?editorDraft.total:editorDraft.volume,value=Number(raw);
  if(raw===''||!Number.isFinite(value)||value<0){fail('请填写有效奶量');return;}
  if(recordKind==='measure'){
@@ -458,7 +462,7 @@ function render(){
  renderPage();$('#page').scrollTop=pageScroll;
  $('#overlay').classList.add('hidden');
  $('#interaction-layer').classList.toggle('hidden',!recordKind);$('#interaction-layer').innerHTML=recordKind?`<div class="popup-scrim" data-action="closeRecord"></div>${editorHTML()}`:'';
- for(const el of [$('#page'),$('.app-header'),$('.bottom-nav'),$('#resume')])el.inert=false;
+ for(const el of [$('#page'),$('.app-header'),$('.bottom-nav'),$('#resume')])el.inert=!!recordKind;
  if(recordKind){if(document.hasFocus()&&!externalTextFocus&&(!modalWasOpen||focusWasInPopup)){if(modalWasOpen&&focusId&&document.getElementById(focusId))document.getElementById(focusId).focus({preventScroll:true});else $('#record-dismiss').focus({preventScroll:true});}$('.record-fields').scrollTop=modalScroll;}
  const signature=`${view}:${current}:${timerMode()}`;
  if(signature!==ringSignature&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
@@ -527,6 +531,7 @@ document.addEventListener('click',e=>{
   case 'doneDate':dateEditing=false;render();break;
   case 'ackTimerNotice':{const notice=state.timerNotices.find(n=>n.id===el.dataset.noticeId&&!n.acknowledged);if(!notice)break;notice.acknowledged=true;if(notice.kind==='cool'){state.pendingMixBatchId=notice.toolOnly?null:notice.batchId;removeCoolingTask(notice.timerId);select(notice.toolOnly?'cool':state.pinned.includes(2)?'mix':'take');}else{state.warm=null;state.warmEnd=null;current='take';timerExpanded=false;tab='首页';view='workspace';save();render();}const nextNotice=latestNotice();if(nextNotice)select(nextNotice.kind);break;}
 
+ if(recordKind==='measure'&&editorDraft.storage!=='Frozen'&&editorDraft.admissionMode==='record'){const p=state.pumpRecords.find(p=>p.id===editorDraft.pumpRecordId);if(p)editorDraft.total=pendingVolume(p);}
   case 'saveMiniFridge':{const value=Number($('#pref-mini-fridge').value);if(Number.isFinite(value)&&value>=0&&value<=10){state.preferences.miniFridgeTemperature=value;save();$('#mini-preference-status').textContent='已保存';}else $('#mini-preference-status').textContent='请填写有效设置温度';break;}
   case 'manualCooling':editorDraft.batchId=null;editorDraft.volume='';editorDraft.needsVolume=true;render();break;
   case 'fillFrozenFromScan':{const record=window.parent.__milkStoragePrototype.records.find(r=>r.storage==='Frozen'&&r.containerId);if(!record){fail('暂无已绑定奶袋，请手动输入取用量');break;}applyScannedTake(record.containerId);break;}
@@ -548,7 +553,7 @@ document.addEventListener('click',e=>{
   case 'openCooling':openRecord('cool');break;
   case 'openTransaction':openRecord(current==='finish'?'measure':'transaction');break;
   case 'openBottleAdjust':openRecord('bottle-adjust');break;
-  case 'closeRecord':closeRecord();break;
+  case 'closeRecord':e.preventDefault();e.stopImmediatePropagation();closeRecord();break;
   case 'commitRecord':commitRecord();break;
   case 'skipWarming':{const fromEntry=editorDraft.takeFromEntry;state.warmPending=null;recordKind=null;save();if(fromEntry)window.parent.milkFlowIntegration?.returnToTakeEntry();else render();break;}
   case 'startWarm':openRecord('warm');break;
@@ -585,7 +590,7 @@ document.addEventListener('click',e=>{
   case 'closeSmartEntry':smartEntry=null;render();break;
   case 'toggleAccessory':{const key=el.dataset.accessory;if(!['bags','fridge'].includes(key))break;state.preferences.accessories[key]=!state.preferences.accessories[key];localStorage.setItem('milk-assistant-demo-flow-accessories',JSON.stringify(state.preferences.accessories));save();el.classList.toggle('on',state.preferences.accessories[key]);el.setAttribute('aria-checked',String(state.preferences.accessories[key]));if(key==='fridge'){document.getElementById('pref-mini-fridge')?.closest('.preference-card').remove();if(state.preferences.accessories.fridge)document.getElementById('pref-fridge')?.closest('.preference-card').insertAdjacentHTML('afterend',miniFridgeSettingHTML());}break;}
   case 'flowRecords':recordKind=null;tab='记录';view='workspace';render();break;
-  case 'flowBack':if(view==='take-form'){recordKind=null;window.parent.milkFlowIntegration?.returnToTakeEntry();break;}if(view==='pump-picker'){view='workspace';recordKind='measure';render();break;}if(view!=='workspace'||tab!=='首页'||habitSurvey){habitSurvey=null;recordKind=null;view='workspace';tab='首页';render();$('#page').scrollTop=0;}else window.parent.milkFlowIntegration?.backHome();break;
+  case 'flowBack':if(recordKind){closeRecord();break;}if(view==='take-form'){recordKind=null;window.parent.milkFlowIntegration?.returnToTakeEntry();break;}if(view==='pump-picker'){view='workspace';recordKind='measure';render();break;}if(view!=='workspace'||tab!=='首页'||habitSurvey){habitSurvey=null;recordKind=null;view='workspace';tab='首页';render();$('#page').scrollTop=0;}else window.parent.milkFlowIntegration?.backHome();break;
   case 'global':global();break;
   case 'all':view='all';tab='首页';opened=true;render();$('#page').scrollTop=0;break;
   case 'restore':state.pinned=[0,1,2,3,4,5];save();render();break;
@@ -671,7 +676,7 @@ window.milkFlowDemo={
   state.looseBatches=records.filter(r=>r.flowBatchId).map(r=>({...oldBatches.find(b=>b.id===r.flowBatchId),id:r.flowBatchId,deviceId:r.deviceId,storageLocation:r.storageLocation,storageZone:r.storageZone||(r.storageLocation?'mini':'fridge'),amount:ml(r),oldest:r.oldest||oldBatches.find(b=>b.id===r.flowBatchId)?.oldest||Date.now()}));
   state.frozen=Math.max(0,records.filter(r=>r.storage==='Frozen').reduce((n,r)=>n+ml(r),0)-unlinkedFrozen);syncPool();syncLoose();
   for(const record of records.filter(r=>r.source==='storage-manual')){const id='stock-pump-'+record.id;if(!state.pumpRecords.some(p=>p.id===id))state.pumpRecords.push({id,total:ml(record),left:null,right:null,at:record.pumpedAt||new Date(record.productionDate+'T00:00:00').getTime()||Date.now(),stored:true,allocated:ml(record)});}
-  for(const item of history){const id='air2-'+item.id;if(!state.pumpRecords.some(p=>p.id===id)){const total=Math.round(item.total*29.5735),left=Math.round(item.left*29.5735),at=item.at||Number(item.id?.match(/(\d{13})/)?.[1])||Date.now();state.pumpRecords.push({id,total,left,right:total-left,at,stored:records.some(r=>r.pumpSessionId===item.id),allocated:0});}}
+  for(const item of history){const id='air2-'+item.id;if(!state.pumpRecords.some(p=>p.id===id)){const total=Math.round(item.total*29.5735),left=Math.round(item.left*29.5735),at=item.at||Number(item.id?.match(/(\d{13})/)?.[1])||Date.now();state.pumpRecords.push({id,total,left,right:total-left,at,stored:records.some(r=>r.pumpSessionId===item.id),allocated:0,durationSeconds:item.durationSeconds,durationMinutes:item.durationMinutes});}}
   state.coolingTasks=state.coolingTasks.filter(t=>t.toolOnly||state.looseBatches.some(b=>b.id===t.batchId));state.timerNotices=state.timerNotices.filter(n=>n.kind!=='cool'||state.coolingTasks.some(t=>t.id===n.timerId));refreshCoolingSelection();save();render();
  },
  openTake(record){
